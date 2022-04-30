@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Line CTF 2022 X-Factor Writeup | Sias27's Blog</title><meta name="keywords" content="CTF, Cryptography, Linear Algebra"><meta name="author" content="Sias27"><meta name="copyright" content="Sias27"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="题目背景RSA 签名: $s \equiv m^d \pmod{n}$ RSA 验签: $m^\prime \equiv s^e \pmod{n}$, 检查$m^\prime &#x3D; m$是否成立. 一般情况下要求对$m$的哈希值$H(m)$进行签名, 否则给定若干组$m_i$, 可以根据$m_i$的因子构造出新的消息$M$和伪造签名$S$. 假设$M &#x3D; \prod{m_i^{\alpha_i}}$">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Line CTF 2022 X-Factor Writeup">
+<meta property="og:url" content="http://example.com/linectf-2022-xfactor/index.html">
+<meta property="og:site_name" content="Sias27&#39;s Blog">
+<meta property="og:description" content="题目背景RSA 签名: $s \equiv m^d \pmod{n}$ RSA 验签: $m^\prime \equiv s^e \pmod{n}$, 检查$m^\prime &#x3D; m$是否成立. 一般情况下要求对$m$的哈希值$H(m)$进行签名, 否则给定若干组$m_i$, 可以根据$m_i$的因子构造出新的消息$M$和伪造签名$S$. 假设$M &#x3D; \prod{m_i^{\alpha_i}}$">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/favicon.jpeg">
+<meta property="article:published_time" content="2022-05-30T12:54:49.000Z">
+<meta property="article:modified_time" content="2022-04-30T08:16:54.837Z">
+<meta property="article:author" content="Sias27">
+<meta property="article:tag" content="CTF, Cryptography, Linear Algebra">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/favicon.jpeg"><link rel="shortcut icon" href="/img/favicon.jpeg"><link rel="canonical" href="http://example.com/linectf-2022-xfactor/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Line CTF 2022 X-Factor Writeup',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-04-30 16:16:54'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if (GLOBAL_CONFIG_SITE.isHome && /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 5.4.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/favicon.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><span> 博客归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><span> 专题</span></a></div><div class="menus_item"><a class="site-page" href="/utils/"><span> 实用工具</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><span> 关于这个博客</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">Sias27's Blog</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><span> 博客归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><span> 专题</span></a></div><div class="menus_item"><a class="site-page" href="/utils/"><span> 实用工具</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><span> 关于这个博客</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav></header><main class="layout" id="content-inner"><div id="page"><div id="article-container"><h1 class="page-title">Line CTF 2022 X-Factor Writeup</h1><h1 id="题目背景"><a href="#题目背景" class="headerlink" title="题目背景"></a>题目背景</h1><p>RSA 签名: $s \equiv m^d \pmod{n}$</p>
+<p>RSA 验签: $m^\prime \equiv s^e \pmod{n}$, 检查$m^\prime = m$是否成立.</p>
+<p>一般情况下要求对$m$的哈希值$H(m)$进行签名, 否则给定若干组$m_i$, 可以根据$m_i$的因子构造出新的消息$M$和伪造签名$S$.</p>
+<p>假设$M = \prod{m_i^{\alpha_i}}$,$m_i$对应的签名为$s_i$,则有</p>
+<p>$S \equiv M^d \pmod{n}$</p>
+<p>$\quad \equiv (m_1^{\alpha_1}m_2^{\alpha_2}\cdots m_n^{\alpha_n})^d$</p>
+<p>$\quad \equiv (m_1^{\alpha_1})^d(m_2^{\alpha_2})^d\cdots (m_n^{\alpha_n})^d$</p>
+<p>$\quad \equiv (m_1^d)^{\alpha_1}(m_2^d)^{\alpha_2}\cdots (m_n^d)^{\alpha_n}$</p>
+<p>$\quad \equiv s_1^{\alpha_1}s_2^{\alpha_2}\cdots s_n^{\alpha_n}$</p>
+<h1 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h1><p>题目给定了若干组RSA签名$(m_i, s_i)$, 给定$M$, 要求伪造其签名$S$.</p>
+<p>考察$m_i$的质因子, 发现他们由下列质数组合而成</p>
+<p>$P_i = {2, 61, 197, 811, 947, 970111, 2098711, 2854343, 9605087}$</p>
+<p>考察$M$的质因子, 发现他们由下列质数组合而成</p>
+<p>$P_m = {2, 197, 947, 2098711, 9605087}$</p>
+<p>说明$M$或许可以用$m_i$的某种组合来表示.</p>
+<p>我们这里构造一个线性空间, 将$p_1^{\alpha_1}p_2^{\alpha_2}\cdots p_n^{\alpha_n}$ 映射到向量$[\alpha_1, \alpha_2, \cdots, \alpha_n]^T$</p>
+<p>于是可以将$m_i$按列向量排列为以下矩阵</p>
+<script type="math/tex; mode=display">
+A = \left[ \begin{matrix}
+0& 1& 0& 0& 0& 0& 0\\
+0& 1& 0& 0& 1& 0& 0\\
+0& 1& 0& 0& 2& 0& 1\\
+1& 0& 0& 0& 1& 0& 1\\
+3& 0& 0& 1& 0& 0& 1\\
+1& 0& 1& 1& 0& 0& 0\\
+0& 0& 2& 1& 0& 1& 0\\
+0& 0& 1& 0& 0& 1& 0\\
+0& 0& 0& 0& 0& 1& 0\\
+ \end{matrix} \right]</script><p>将$M$映射为以下向量</p>
+<script type="math/tex; mode=display">
+b = [1,0,1,0,1,0,1,0,1]^T</script><p>则$M$可以用$m_i$的组合表示可以变换为求解$Ax = b$</p>
+<p>发现$rank(A) = rank(A|b)$说明这个方程可解.发现$A$不是方阵,我们可以通过左逆消去A.</p>
+<script type="math/tex; mode=display">
+    A^+_{left} = (A^TA)^{-1}A^T</script><p>解得 $x = [-1,1,-1,2,-1,1,2]$, 所以</p>
+<script type="math/tex; mode=display">
+    M \equiv m_1^{-1}m_2m_3^{-1}m_4^2m_5^{-1}m_6m_7^{2} \pmod{n}</script><script type="math/tex; mode=display">
+    S \equiv s_1^{-1}s_2s_3^{-1}s_4^2s_5^{-1}s_6s_7^{2} \pmod{n}</script><p>根据题目要求得到flag</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> primefac <span class="keyword">import</span> primefac</span><br><span class="line"><span class="keyword">from</span> sympy <span class="keyword">import</span> factorint</span><br><span class="line"></span><br><span class="line">n = <span class="number">0xa9e7da28ebecf1f88efe012b8502122d70b167bdcfa11fd24429c23f27f55ee2cc3dcd7f337d0e630985152e114830423bfaf83f4f15d2d05826bf511c343c1b13bef744ff2232fb91416484be4e130a007a9b432225c5ead5a1faf02fa1b1b53d1adc6e62236c798f76695bb59f737d2701fe42f1fbf57385c29de12e79c5b3</span> </span><br><span class="line">e = <span class="number">0x10001</span> </span><br><span class="line"></span><br><span class="line">p = [<span class="number">0x945d86b04b2e7c7</span> , <span class="number">0x5de2</span> , <span class="number">0xa16b201cdd42ad70da249</span> , <span class="number">0x6d993121ed46b</span> , <span class="number">0x726fa7a7</span> , <span class="number">0x31e828d97a0874cff</span> , <span class="number">0x904a515</span> ]</span><br><span class="line"></span><br><span class="line">c = [<span class="number">0x17bb21949d5a0f590c6126e26dc830b51d52b8d0eb4f2b69494a9f9a637edb1061bec153f0c1d9dd55b1ad0fd4d58c46e2df51d293cdaaf1f74d5eb2f230568304eebb327e30879163790f3f860ca2da53ee0c60c5e1b2c3964dbcf194c27697a830a88d53b6e0ae29c616e4f9826ec91f7d390fb42409593e1815dbe48f7ed4</span> , <span class="number">0x3ea73715787028b52796061fb887a7d36fb1ba1f9734e9fd6cb6188e087da5bfc26c4bfe1b4f0cbfa0d693d4ac0494efa58888e8415964c124f7ef293a8ee2bc403cad6e9a201cdd442c102b30009a3b63fa61cdd7b31ce9da03507901b49a654e4bb2b03979aea0fab3731d4e564c3c30c75aa1d079594723b60248d9bdde50</span> , <span class="number">0x9444e3fc71056d25489e5ce78c6c986c029f12b61f4f4b5cbd4a0ce6b999919d12c8872b8f2a8a7e91bd0f263a4ead8f2aa4f7e9fdb9096c2ea11f693f6aa73d6b9d5e351617d6f95849f9c73edabd6a6fde6cc2e4559e67b0e4a2ea8d6897b32675be6fc72a6172fd42a8a8e96adfc2b899015b73ff80d09c35909be0a6e13a</span> , <span class="number">0x2b7a1c4a1a9e9f9179ab7b05dd9e0089695f895864b52c73bfbc37af3008e5c187518b56b9e819cc2f9dfdffdfb86b7cc44222b66d3ea49db72c72eb50377c8e6eb6f6cbf62efab760e4a697cbfdcdc47d1adc183cc790d2e86490da0705717e5908ad1af85c58c9429e15ea7c83ccf7d86048571d50bd721e5b3a0912bed7c</span> , <span class="number">0xa7d5548d5e4339176a54ae1b3832d328e7c512be5252dabd05afa28cd92c7932b7d1c582dc26a0ce4f06b1e96814ee362ed475ddaf30dd37af0022441b36f08ec8c7c4135d6174167a43fa34f587abf806a4820e4f74708624518044f272e3e1215404e65b0219d42a706e5c295b9bf0ee8b7b7f9b6a75d76be64cf7c27dfaeb</span> , <span class="number">0x67832c41a913bcc79631780088784e46402a0a0820826e648d84f9cc14ac99f7d8c10cf48a6774388daabcc0546d4e1e8e345ee7fc60b249d95d953ad4d923ca3ac96492ba71c9085d40753cab256948d61aeee96e0fe6c9a0134b807734a32f26430b325df7b6c9f8ba445e7152c2bf86b4dfd4293a53a8d6f003bf8cf5dffd</span> , <span class="number">0x927a6ecd74bb7c7829741d290bc4a1fd844fa384ae3503b487ed51dbf9f79308bb11238f2ac389f8290e5bcebb0a4b9e09eda084f27add7b1995eeda57eb043deee72bfef97c3f90171b7b91785c2629ac9c31cbdcb25d081b8a1abc4d98c4a1fd9f074b583b5298b2b6cc38ca0832c2174c96f2c629afe74949d97918cbee4a</span> ]</span><br><span class="line">m = <span class="number">0x686178656c696f6e</span></span><br><span class="line"></span><br><span class="line">s = <span class="built_in">set</span>()</span><br><span class="line">t = [i <span class="keyword">for</span> i <span class="keyword">in</span> primefac(m)]</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> t:</span><br><span class="line">    s.add(i)</span><br><span class="line">cc = <span class="number">0</span> </span><br><span class="line"><span class="keyword">for</span> x <span class="keyword">in</span> p:</span><br><span class="line">    t = [i <span class="keyword">for</span> i <span class="keyword">in</span> primefac(x)]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> t:</span><br><span class="line">        s.add(i)</span><br><span class="line"></span><br><span class="line">primelist = <span class="built_in">list</span>(s)</span><br><span class="line">primelist.sort()</span><br><span class="line"><span class="built_in">print</span>(primelist)</span><br><span class="line"><span class="built_in">print</span>([i <span class="keyword">for</span> i <span class="keyword">in</span> primefac(m)])</span><br><span class="line">M = []</span><br><span class="line"><span class="keyword">for</span> x <span class="keyword">in</span> p:</span><br><span class="line">    l = factorint(x)</span><br><span class="line">    vec = []</span><br><span class="line">    <span class="keyword">for</span> f <span class="keyword">in</span> primelist:</span><br><span class="line">        <span class="keyword">if</span> f <span class="keyword">in</span> l:</span><br><span class="line">            vec.append(l[f])</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            vec.append(<span class="number">0</span>)</span><br><span class="line">    <span class="built_in">print</span>(vec)</span><br><span class="line">    M.append(vec)</span><br><span class="line"></span><br><span class="line">l = factorint(m)</span><br><span class="line">ans = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> f <span class="keyword">in</span> primelist:</span><br><span class="line">    <span class="keyword">if</span> f <span class="keyword">in</span> l:</span><br><span class="line">        ans.append(l[f])</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        ans.append(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">v = Matrix(ans).transpose()</span><br><span class="line">M = Matrix(M).transpose()</span><br><span class="line"><span class="built_in">print</span>(M)</span><br><span class="line"><span class="built_in">print</span>(v)</span><br><span class="line"><span class="built_in">input</span>()</span><br><span class="line"><span class="built_in">print</span>(M.rref())</span><br><span class="line"><span class="built_in">input</span>()</span><br><span class="line">res = (M.transpose()*M).inverse()*M.transpose()*v</span><br><span class="line"></span><br><span class="line">powers = res.column(<span class="number">0</span>)</span><br><span class="line">mm = <span class="number">1</span> </span><br><span class="line">s = <span class="number">1</span> </span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(p)):</span><br><span class="line">    <span class="built_in">print</span>(powers[i])</span><br><span class="line">    mm *= <span class="built_in">pow</span>(p[i], powers[i], n)</span><br><span class="line">    s *= <span class="built_in">pow</span>(c[i], powers[i], n)</span><br><span class="line"></span><br><span class="line">s %= n</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> mm == m</span><br><span class="line"><span class="keyword">assert</span> <span class="built_in">pow</span>(s,e,n) == m</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">b&#x27;line&#123;&#x27;</span>+ long_to_bytes(<span class="built_in">int</span>(s))[-<span class="number">16</span>:].<span class="built_in">hex</span>()+<span class="string">b&#x27;&#125;&#x27;</span>)</span><br><span class="line"><span class="comment"># LINECTF&#123;a049347a7db8226d496eb55c15b1d840&#125;</span></span><br></pre></td></tr></table></figure></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/favicon.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Sias27</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">题目背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Solution"><span class="toc-number">2.</span> <span class="toc-text">Solution</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/nahamCon_CTF_2022/" title="nahamCon CTF 2022 Cryptography Writeup">nahamCon CTF 2022 Cryptography Writeup</a><time datetime="2022-05-30T12:54:49.000Z" title="发表于 2022-05-30 20:54:49">2022-05-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/linectf-2022-xfactor/" title="Line CTF 2022 X-Factor Writeup">Line CTF 2022 X-Factor Writeup</a><time datetime="2022-05-30T12:54:49.000Z" title="发表于 2022-05-30 20:54:49">2022-05-30</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/utils/" title="实用工具">实用工具</a><time datetime="2021-08-17T12:54:49.000Z" title="发表于 2021-08-17 20:54:49">2021-08-17</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2022 By Sias27</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script></div></div></body></html>
